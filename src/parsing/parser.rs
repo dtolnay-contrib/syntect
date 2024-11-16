@@ -15,9 +15,7 @@ use super::scope::*;
 use super::syntax_definition::*;
 use crate::parsing::syntax_definition::ContextId;
 use crate::parsing::syntax_set::{SyntaxReference, SyntaxSet};
-use fnv::FnvHasher;
 use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
 use std::i32;
 use std::usize;
 
@@ -82,7 +80,7 @@ struct RegexMatch<'a> {
 }
 
 /// Maps the pattern to the start index, which is -1 if not found.
-type SearchCache = HashMap<*const MatchPattern, Option<Region>, BuildHasherDefault<FnvHasher>>;
+type SearchCache = HashMap<*const MatchPattern, Option<Region>, foldhash::fast::FixedState>;
 
 // To understand the implementation of this, here's an introduction to how
 // Sublime Text syntax definitions work.
@@ -232,8 +230,8 @@ impl ParseState {
         }
 
         let mut regions = Region::new();
-        let fnv = BuildHasherDefault::<FnvHasher>::default();
-        let mut search_cache: SearchCache = HashMap::with_capacity_and_hasher(128, fnv);
+        let foldhash = foldhash::fast::FixedState::default();
+        let mut search_cache: SearchCache = HashMap::with_capacity_and_hasher(128, foldhash);
         // Used for detecting loops with push/pop, see long comment above.
         let mut non_consuming_push_at = (0, 0);
 
